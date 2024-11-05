@@ -1,0 +1,46 @@
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/wait.h>
+
+/**
+ * This function relies on part a in order to redirect its output to a specified file
+ * 
+ * @param argc argument count
+ * @param argv argument array
+ * @param fileDes file descriptor
+ * @param partaArgs array of strings to hold arguments to be executed in execv
+ * @param eret return value of execv call
+ * 
+ */
+int main(int argc, char* argv[]) {
+    // Check that the proper number of arguments was given
+    if (argc != 3) {
+        fprintf(stderr, "USAGE:\n  partb FILEIN FILEOUT\n");
+        return 1;
+    }
+
+    //Open the output file with write permissions
+    int fileDes = open(argv[2], O_WRONLY | O_CREAT, 0770);
+    if (fileDes < 0) {
+        fprintf(stderr, "ERROR: The output file can't be opened\n");
+        return 2;
+    }
+    //Redirect to output
+    dup2(fileDes, STDOUT_FILENO);
+
+    //Header
+    printf("Category,Count\n");
+
+    char *partaArgs[] = {"./build/parta", argv[1], NULL};
+    //Execute the code in part a
+    int eret = execv("./build/parta", partaArgs);
+    if (eret < 0) {
+        perror("execv failed");
+        return 2;
+    }
+
+    return 0;
+}
