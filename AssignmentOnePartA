@@ -1,0 +1,61 @@
+#include "parta.h"
+
+/**
+ * This function will obtain the total sum of all indexes in array[]
+ * If the array is null or the array length is invalid, 0 is returned
+ * If everything is valid, the total sum of all elements will be returned
+ * 
+ * @param array is the array of type int
+ * @param array_len is an int that represents the length of the array
+ */
+int array_sumpos(int array[], int array_len) {
+//Base case which returns 0 if the array is null    
+    if(array == NULL) {
+        return 0;
+    }
+//Base case which returns 0 if the array length is negative or 0    
+    if(array_len <= 0){
+        return 0;
+    }
+
+    int totalSum = 0;
+//For loop increments i until it reaches the length of the array     
+    for(int i = 0; i < array_len; i++){
+//This function needs to work in magnitude, not direction, so any negative numbers are turned positive here        
+        if(array[i] < 0){
+            array[i] = array[i] * -1;
+        }
+//The total sum is added to all other sums
+        totalSum += array[i];
+        
+    }
+//The sum of the numbers of the array is returned    
+    return totalSum;
+}
+
+/**
+ * This function will return the length of the array specified by the user
+ * The only way this could be inhibited would be with an array length of 0, or the end value is reached before the end of the array
+ * 
+ * @param array the array used in the problem
+ * @param array_len the length of the array, specified by the user
+ * @param begin beginning number of the array
+ * @param end ending number of the array
+ */
+int array_fill(int array[], int array_len, int begin, int end) {
+//Base case to catch an array length of zero, as it would be forced to return zero    
+    if(array_len == 0){
+        return 0;
+    } 
+//Iterates from 0 to the array length in order to add the correct numbers and positions to the array    
+    for(int i = 0; i < array_len; i++){
+        array[i] = begin;
+        begin++;
+//Once the incremented beginning number has exceeded the ending number, the number of times the for loop was run is returned        
+        if(begin > end){
+            return i+1;
+        }
+    }
+//If the array length was not sufficient for the amount of numbers trying to be added, the array length was returned
+    return array_len;
+}
