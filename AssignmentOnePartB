@@ -1,0 +1,86 @@
+#include "partb.h"
+#include <ctype.h>
+
+/**
+ * This function takes a str and processes it to see how many uppercase letters are in it
+ * It returns the amount of total uppercase letters
+ * 
+ * @param str the array of characters, pointing to the first index
+ */
+int string_count_upper(const char* str) {
+//Base case which does not allow for a null string    
+    if(str == NULL){
+        return 0;
+    }
+
+    int uppercaseLetters = 0;    
+    int i = 0;
+//Look through the string (array of characters) until the terminator character is found    
+    while(str[i] != '\0'){
+//If an uppercase letter is found in the string, increment the number of uppercase letters by one        
+        if(isupper(str[i])){
+            uppercaseLetters++;
+        }
+        i++;
+    }
+//Return the total number of uppercase letters in the string    
+    return uppercaseLetters;
+}
+
+/**
+ * This function fills a string with the same character
+ * 
+ * @param dest is the array (string) used
+ * @param dest_cap is the number of alloted indexes
+ * @param c is the one character used over however long the array is 
+ */
+void string_fill(char dest[], int dest_cap, char c) {
+//Base case that disallows the array from being null    
+    if(dest == NULL){
+        return dest;
+    }
+//When the destination capacity has spots to fill (outside of the terminator) this loop will fill the spaces with char c
+    for(int i = 0; i < dest_cap - 1; i++){
+        dest[i] = c;
+    }
+//In the final position of the array, a terminator character is appended    
+    dest[dest_cap - 1] = '\0';
+
+}
+
+/**
+ * This function will concatenate two strings, which in C will be viewed as arrays of type char, ending in a terminator character
+ * 
+ * @param dest is the first array used, and the starting array
+ * @param dest_cap the limit to how many indexes can be in the array
+ * @param src the second array used, will start after the terminator character of the first is erased
+ */
+void string_concat(char dest[], int dest_cap, const char* src) {
+//All three of these conditionals are base cases that disallow dest and src from being null an dest_cap from being negative    
+    if(dest == NULL){
+        return;
+    }  
+    if(src == NULL){
+        return;
+    }  
+    if(dest_cap <= 0){
+        return;
+    }
+
+    int endOfStr1 = 0;
+//This while loop will give the variable endOfStr1 the index of the terminator character for dest    
+    while(dest[endOfStr1] != '\0'){
+        endOfStr1++;
+    }
+
+    int endOfStr2 = 0;
+//This while loop will append the values of src to the dest array, with the first replacing the terminator character of dest    
+    while(src[endOfStr2] != '\0'){
+        dest[endOfStr1] = src[endOfStr2];
+        endOfStr2++;
+        endOfStr1++;
+    }
+//The end of the array is given the terminator character
+    dest[endOfStr1] = '\0';
+
+}
