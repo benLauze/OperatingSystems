@@ -1,0 +1,193 @@
+#include "parta.h"
+#include <stdlib.h>
+#include <stdio.h>
+
+/**
+ * This function initializes an array of Process Control Blocks with given burst times
+ * Each PCB is initialized with a:
+ * pid: Sequential process ID starting from 0
+ * burst_left: Initial burst time from the bursts array
+ * wait: Initial wait time set to 0
+ * 
+ * @param bursts array of CPU burst times for each process
+ * @param blen length of the bursts array
+ * @param procs array of PCBs
+ * @return pointer to the newly allocated array of PCBs, or NULL if allocation fails or input parameters are invalid
+ * 
+ */
+struct pcb* init_procs(int* bursts, int blen) {
+    //Validate the input
+    if (bursts == NULL || blen <= 0) {
+        printf("Invalid input: the bursts array is NULL or the blen is non-positive.\n");
+        return NULL;
+    }
+    //Allocate memory
+    struct pcb* procs = (struct pcb*)malloc(sizeof(struct pcb) * blen);
+    //Check for success
+    if (procs == NULL) {
+        printf("Memory allocation failed!\n");
+        return NULL;
+    }
+
+    //Initialize each PCB
+    for (int i = 0; i < blen; i++) {
+        procs[i].pid = i;
+        procs[i].burst_left = bursts[i];
+        procs[i].wait = 0;
+    }
+    return procs;
+}
+
+/**
+ * This function prints the remaining burst time for each process
+ * 
+ * @param procs array of PCB
+ * @param plen length of the PCB array
+ *  
+ */
+void printall(struct pcb* procs, int plen) {
+    //Validate the input
+    if (procs == NULL || plen <= 0) {
+        printf("Invalid input: the procs array is NULL or the plen is non-positive.\n");
+        return;
+    }
+    //Print the remaining burst time
+    for (int i = 0; i < plen; i++) {
+        printf("%d\n", procs[i].burst_left);
+    }
+
+}
+
+/**
+ * This function executes a process for a specified amount of time and updates the wait times
+ * 
+ * @param procs array of PCB
+ * @param plen length of the array
+ * @param current PID of the process to run
+ * @param amount time taken to run the process
+ */
+void run_proc(struct pcb* procs, int plen, int current, int amount) {
+    //Validate the input
+    if (procs == NULL || plen <= 0 || current < 0 || current >= plen || amount <= 0) {
+        printf("Invalid input in run_proc: check procs, plen, current, or amount.\n");
+        return;
+    }
+
+    for (int i = 0; i < plen; i++) {
+
+        //If on the current process
+        if (procs[i].pid == current) {
+            //Calculate run time
+            int runTime;
+            if (procs[i].burst_left > amount) {
+                runTime = amount;
+            } else {
+                runTime = procs[i].burst_left;
+            }
+            procs[i].burst_left -= runTime;  //
+        }
+
+        //Update wait time
+        else if (procs[i].burst_left > 0) {
+            procs[i].wait += amount;
+        }
+    }
+}
+
+/**
+ * This function implements a first come first serve algorithm
+ * 
+ * @param procs array of PCBs
+ * @param plen length of the PCB array
+ * @return total execution time
+ * 
+ */
+int fcfs_run(struct pcb* procs, int plen) {
+    //Validate the input
+    if (procs == NULL || plen <= 0) {
+        printf("Invalid input: the procs array is NULL or the plen is non-positive.\n");
+        return -1;
+    }
+
+    int totalTime = 0;
+    int totalWait = 0;
+    
+    //Process each PCB in order
+    for (int i = 0; i < plen; i++) {
+        //Set wait time
+        procs[i].wait = totalTime;
+        totalWait += procs[i].wait;
+        //Run to completion
+        totalTime += procs[i].burst_left;
+        run_proc(procs, plen, i, procs[i].burst_left);
+    }
+
+    return totalTime;
+}
+
+/**
+ * This function finds the next round robin process
+ * 
+ * @param current current process id
+ * @param procs array of PCB
+ * @param plen length of the array
+ * @return PID of the next process
+ * 
+ */
+int rr_next(int current, struct pcb* procs, int plen) {
+    //Validate the input
+    if (procs == NULL || plen <= 0 || current > plen) {
+        return -1;
+    }
+
+    //Find the next process that has remaining burst time
+    for (int i = 0; i < plen; i++) {
+        int next = (current + 1 + i) % plen;
+        if (procs[next].burst_left > 0) {
+            return next;
+        }
+    }
+
+    //No process found
+    return -1;
+}
+/**
+ * This function implements the round robin algorithm
+ * 
+ * @param procs array of PCBs
+ * @param plen length of the PCB array
+ * @param quantum time quantum for each process
+ * @return the total execution time
+ */
+int rr_run(struct pcb* procs, int plen, int quantum) {
+    //Validate the input
+    if (procs == NULL || plen <= 0 || quantum <= 0) {
+        return -1;
+    }
+    //Initialize variables
+    int totalTime = 0;
+    int current = -1;
+    int runTime = 0;
+
+    //Loop until no more processes
+    while (true) {
+        //Find the next  to run
+        current = rr_next(current, procs, plen);
+        if (current == -1) {
+            break;
+        }
+        //Calculate the time of the current process
+        if (procs[current].burst_left < quantum) {
+            runTime = procs[current].burst_left;
+        }
+        else {
+            runTime = quantum;
+        }
+
+        //Execute and update
+        run_proc(procs, plen, current, runTime);
+        totalTime += runTime;
+    }
+
+    return totalTime;
+}
