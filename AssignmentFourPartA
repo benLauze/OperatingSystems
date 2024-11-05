@@ -1,0 +1,89 @@
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <ctype.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/wait.h>
+
+/**
+ * This program counts elements of a file in segments of eight bytes
+ * They will be separated into five categories
+ * The counted variables will be printed, if applicable
+ * 
+ * @param argc argument count
+ * @param argv argument array
+ * @param ucCount uppercases in file
+ * @param lcCount lowercases in file
+ * @param dCount digits in file
+ * @param spCount spaces in file
+ * @param oCount others in file
+ * @param fileDes file descriptor
+ * @param fileLength length of file
+ * 
+ */
+int main(int argc, char* argv[]) {
+    // Declare the buffer to use. Do NOT change!
+    enum { BUFSIZE = 8 };
+    char buffer[BUFSIZE];
+
+    //Initialize counting variables and file descriptor
+    int ucCount = 0;
+    int lcCount = 0;
+    int dCount = 0;
+    int spCount = 0;
+    int oCount = 0;
+    int fileDes = STDIN_FILENO;
+
+    //Check for argument file
+    if(argc > 1){
+        fileDes = open(argv[1], O_RDONLY);
+        if (fileDes < 0) {
+            //Handle error, had to research fprintf further before implementing this
+            fprintf(stderr, "ERROR: %s not found\n", argv[1]);
+            return 2;
+        }
+        
+    } else {
+        fprintf(stderr, "USAGE:\n  parta FILEIN\n");
+        return 1;
+    }
+    //Read from the file
+    int fileLength = read(fileDes, buffer, BUFSIZE - 1);
+    while (fileLength > 0) {
+        buffer[fileLength] = '\0';
+
+        //Count the elements
+        for (int i = 0; i < fileLength; i++) {
+            if (isupper(buffer[i])) {
+                ucCount++;
+            } else if (islower(buffer[i])) {
+                lcCount++;
+            } else if (isdigit(buffer[i])) {
+                dCount++;
+            } else if (isspace(buffer[i])) {
+                spCount++;
+            } else {
+                oCount++;
+            }
+        }
+
+        //Read until end is reached
+        fileLength = read(fileDes, buffer, BUFSIZE - 1);
+    }
+
+    //Close the file
+    if (fileDes != STDIN_FILENO) {
+        close(fileDes);
+    }
+
+    //Print all counting variables
+    printf("Upper,%d\n", ucCount);
+    printf("Lower,%d\n", lcCount);
+    printf("Number,%d\n", dCount);
+    printf("Space,%d\n", spCount);
+    printf("Other,%d\n", oCount);
+
+    return 0;
+
+}
