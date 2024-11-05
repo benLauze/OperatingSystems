@@ -1,0 +1,78 @@
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+//exit()
+#include <unistd.h>
+//fork() and execv()
+#include <sys/wait.h>
+//wait()
+#include <libgen.h>
+//basename()
+/**
+ * This Function takes in an array of strings that will represent a file and word that needs to be found in the file.
+ * A fork will be created in order for the child to use execv and grep to find the word in the file.
+ * The parent interprets the child's findings.
+ * 
+ * @param argc the count of the arguments
+ * @param argv the array containing the arguments, each of these are strings
+ * @param searchWord the word we wish to search, given by index one of argv
+ * @param fileName the name of the file we will search for searchWord in, given by index two of argv
+ * @param pid the process identifier, will be 0 when child, positive when parent and -1 when an error occurs
+ * @param childStatus the termination information of the child process
+ * @param exitStatus the exit code of the child process
+ * @return if the word is found in the file
+ */
+int main(int argc, char* argv[]) {
+     //Make sure that there are three arguments 
+     if (argc != 3) {
+        printf("USAGE:\n  %s WORD FILE\n", basename(argv[0]));
+        return 1;
+    }
+    //When given the array of arguments, the indexes shown below will give the variable described in the param section
+    char *searchWord = argv[1];
+    char *fileName = argv[2];
+    //Process identification type, makes it so two almost identical processes run the same code (being parent and child) distinguishable by the return value
+    pid_t pid = fork();
+
+    //Pid == -1 represents an error in the creation of a new process, and must be dealt with
+    if (pid == -1) {
+        perror("fork");
+        return 1;
+        //Child process
+    } else if (pid == 0) {
+        //Prepare arguments for grep, silence error messages and suppress output
+        char *args[] = {"/usr/bin/grep", "-s", "-q", searchWord, fileName, NULL};
+        execv("/usr/bin/grep", args);
+        perror("execv");
+        exit(1);
+        //Parent process, as the only other possibilities have been accounted for
+    } else {
+        //Suspend parent until child is terminated
+        //Once it is finished, wait will terminate, and give status the value of the child (0 or 1, depending on if the word is found)
+        int childStatus;
+        wait(&childStatus);
+        //Check if the child ended normally and extract the exit status
+        if (WIFEXITED(childStatus)) {
+            int exitStatus = WEXITSTATUS(childStatus);
+            //If the word was found by the child
+            if (exitStatus == 0) {
+                printf("FOUND: %s\n", searchWord);
+                return 0;
+                //If the word was not found by the child
+            } else if (exitStatus == 1) {
+                printf("NOT FOUND: %s\n", searchWord);
+                return 0;
+                //If there was an error
+            } else if (exitStatus == 2) {
+                printf("ERROR: %s doesn't exist\n", fileName);
+                return 2;
+            }
+        //If the child process didn't terminate normally, show that it did not
+        } else {
+            printf("The termination of the Child process was not normal\n");
+            return 1;
+        }
+    }
+
+}
