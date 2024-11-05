@@ -1,0 +1,107 @@
+#include "partb.h"
+#include <stdlib.h>  //malloc in b3
+
+/**
+ * This function returns the head of the linked list
+ *
+ * @param head the head of the linked list
+ * @return the head of the list
+ */
+struct ll_node *ll_head(struct ll_node *head) { return head; }
+
+/**
+ * This function returns the tail of the linked list
+ *
+ * @param head the head of the linked list
+ * @return the tail of the list
+ */
+struct ll_node *ll_tail(struct ll_node *head) {
+    //Base case to ensure that the first head of the linked list is not null
+    if (head == NULL) {
+        return NULL;
+    }
+    //Increment head each time that there is a node that follows
+    while (head->next != NULL) {
+        head = head->next;
+    }
+    //In this case, head has been incremented to become the tail of the linked list
+    return head;
+}
+
+/**
+ * This function counts the number of nodes in the linked list
+ * It works similarly to the tail function, with an added counter to obtain the
+ * number of nodes
+ *
+ * @param head the head of the linked list
+ * @param sizeCounter the number of nodes in the linked list
+ * @return the number of nodes in the list
+ */
+int ll_size(struct ll_node *head) {
+    //Base case that states that if the head is null, there are zero elements in the linked list
+    if (head == NULL) {
+        return 0;
+    }
+    int sizeCounter = 0;
+    //While loop that increments a counter for every node visited
+    while (head->next != NULL) {
+        head = head->next;
+        sizeCounter++;
+    }
+    //The while loop will leave one node unaccounted for, so the + 1 is needed
+    return sizeCounter + 1;
+}
+
+/**
+ * This function returns the node in which a desired value resides
+ * If this value does not exist in the linked list, null is returned
+ *
+ * @param head the head of the linked list
+ * @param value the value that we need to find within the linked list
+ * @return the node that the value is found on, and null if it is not found
+ */
+struct ll_node *ll_find(struct ll_node *head, int value) {
+    //No need for a base case, given that the while loop won't run if the head
+    //is null, and will just return null Try to find the value within the 
+    //linked list, by iterating through all values
+    while (head != NULL) {
+        //If the data portion of the node is equal to the desired value, the head is returned
+        if (head->data == value) {
+            return head;
+        } else {
+            head = head->next;
+        }
+    }
+    //If the value is not found in the linked list, return null
+    return NULL;
+}
+
+/**
+ * This function takes the data values from each node in the linked list and
+ * gives them each a respective index in an array
+ *
+ * @param head the head of the linked list
+ * @param sizeOfLinkedList call the previously made size function to find the
+ * size of the linked list
+ * @param allocatedArray the array that the linked list values will be placed in
+ * @return the allocated array
+ */
+int *ll_toarray(struct ll_node *head) {
+    //Base case to ensure that the linked list is not null
+    if (head == NULL) {
+        return NULL;
+    }
+    //Call the previously made function in order to obtain the size of our linked list
+    int sizeOfLinkedList = ll_size(head);
+    //Allocate memory for an array to be created
+    int *allocatedArray = malloc(sizeof(int) * sizeOfLinkedList);
+    int i = 0;
+    //In each index of the array, the value of the data portion of each node in the linked list will be placed
+    while (head != NULL) {
+        allocatedArray[i] = head->data;
+        head = head->next;
+        i++;
+    }
+    //Return the newly made array
+    return allocatedArray;
+}
