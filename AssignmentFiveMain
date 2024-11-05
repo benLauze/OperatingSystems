@@ -1,0 +1,112 @@
+#include "parta.h"
+#include <string.h>
+#include <stdlib.h>
+#include <ctype.h>
+#include <stdio.h>
+
+/**
+ * Prints the usage instructions for the program
+ * Shows the correct format for command line arguments
+ */
+void printTime() {
+    printf("Usage:\n  parta_main fcfs|rr BURSTS\n");
+}
+
+/**
+ * This is the main function, to process and commands and excute the scheduling algorithms
+ * 
+ * @param argc number of command line arguments
+ * @param argv array of command line argument strings
+ * @return 0 on successful execution, 1 on error
+ * 
+ */
+int main(int argc, char* argv[]) {
+
+    //Check if the minimum number of arguments are given
+    if (argc < 3) {
+        printTime();
+        exit(1);
+    }
+    //Index where the burst times start
+    int startingArg = 2;
+    //Time quantum for the round robin
+    int quantum = 0;
+
+    //Handle rr scheduling option
+    if (strcmp(argv[1], "rr") == 0) {
+        //Burst times start after the quantum argument
+        startingArg = 3;
+
+        //Check if the quantum value is provided
+        if (argc < 4) {
+            printTime();
+            exit(1);
+        }
+
+        //Parse value
+        quantum = atoi(argv[2]);
+
+        //Display the algorithm and quantum
+        printf("Using RR(%d)\n\n", quantum);
+    } 
+    //If it is fcfs
+    else if (strcmp(argv[1], "fcfs") == 0) {
+        //Display only the algorithm (no quantum exists for fcfs)
+        printf("Using FCFS\n\n");
+    } 
+    //If it is invalid
+    else {
+        printTime();
+        exit(1);
+    }
+
+    //Allocate array for bursts
+    int* bursts = malloc((argc - startingArg) * sizeof(int));
+    int j = 0;
+
+    //Parse burst times from the command line args
+    for (int i = startingArg; i < argc; i++) {
+        char* endptr;
+        int burst = strtol(argv[i], &endptr, 10);
+
+        //Validate that the argument is valid
+        if (*endptr != '\0') {
+            printf("Invalid argument at position %d: %s\n", i, argv[i]);
+            free(bursts);
+            exit(1);
+        }
+
+        printf("Accepted P%d: Burst %d\n", i - startingArg, burst);
+        bursts[j] = burst;
+        j++;
+    }
+    //Store number of processes
+    int plen = j;
+    struct pcb* procs = init_procs(bursts, plen);
+
+    //Free burst times as they become unnecessary
+    free(bursts);
+    bursts = NULL;
+
+    int totalTime = 0;
+    //Execute the selected algorithm
+    if (strcmp(argv[1], "rr") == 0) {
+        rr_run(procs, plen, quantum);
+    } 
+    else if (strcmp(argv[1], "fcfs") == 0) {
+        fcfs_run(procs, plen);
+    }
+
+    //Calculate the wait time across all processes
+    int totalWait = 0;
+    for (int i = 0; i < plen; i++) {
+        totalWait += procs[i].wait;
+    }
+
+    //Display the average wait time
+    printf("Average wait time: %.2f\n", (double)totalWait / plen);
+
+    //Free the allocated memory
+    free(procs);
+    return 0;
+}
