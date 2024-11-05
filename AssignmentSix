@@ -1,0 +1,234 @@
+#include <stdlib.h> // For malloc/free
+#include <stdio.h>
+#include "parta.h"
+
+/**
+ * This function creates a new memory region
+ * 
+ * @param size size of the region
+ * @return memoryRegion (pointer)
+ */
+struct mem_region* mem_region_init(int size) {
+    //Base case, make sure that size is positive
+    if (size <= 0) {
+        return NULL;
+    }
+
+    //Allocate memory
+    struct mem_region* memoryRegion = malloc(sizeof(struct mem_region));
+    
+    //Make sure the allocation worked
+    if (memoryRegion == NULL) {
+        return NULL;
+    }
+
+    //Fields
+    memoryRegion -> size = size;
+    memoryRegion -> owner = OWNER_NOBODY;
+    memoryRegion -> next = NULL;
+    
+    return memoryRegion;
+}
+
+/**
+ * This function provides the length of the linked list
+ * 
+ * @param regions the ll that contains the regions of memory at each node
+ * @param regionCounter the count of how many regions there are
+ * @return regionCounter
+ */
+int mem_region_length(struct mem_region* regions) {
+    //Intialize the count
+    int regionCounter = 0;
+
+    //Pointer to traverse through the linked list
+    struct mem_region* currentRegion = regions;
+
+    //Increment the region counter for each region that is traversed
+    while (currentRegion != NULL) {
+        regionCounter++;
+        currentRegion = currentRegion -> next;
+    }
+
+    return regionCounter;
+}
+
+/**
+ * This function finds the memory region at a certain given index
+ * 
+ * @param regions the linked list
+ * @param idx the given index
+ * @param currentTraversal the current node being traversed
+ * @return currentTraversal or NULL if not applicable
+ */
+struct mem_region* mem_region_at(struct mem_region* regions, int idx) {
+    //Create a pointer to traverse the ll
+    struct mem_region* currentTraversal = regions;
+    int i = 0;
+
+    //Increment over each traversed node
+    while(currentTraversal != NULL){
+        //Check to see if this is the right node
+        if(i == idx){
+            return currentTraversal;
+        }
+        currentTraversal = currentTraversal -> next;
+        i++;
+    }
+
+    return NULL;
+}
+
+
+/**
+ * This function terminates regions of memory, freeing them
+ * 
+ * @param regions the given ll
+ * @param currentTraversal the current region
+ * @param nextNode the next node to make into current traversal
+ */
+void mem_region_term(struct mem_region* regions) {
+    //Create a pointer to traverse the ll
+    struct mem_region* currentTraversal = regions;
+
+    //Free the nodes while keeping pointer on the next node
+    while (currentTraversal != NULL) {
+        struct mem_region* nextNode = currentTraversal -> next;
+        free(currentTraversal);
+        currentTraversal = nextNode;
+    }
+}
+
+/**
+ * This function splits the size of the region, giving the necessary memory to the owner
+ * 
+ * @param regions the given ll
+ * @param requester the given id
+ * @param size the size of the region
+ */
+void mem_region_assign(struct mem_region* regions, int requester, int size) {
+    //Base case to make sure the inputs are valid
+    if (requester < 0 || size <= 0 || regions == NULL || regions -> size < size) {
+        return;
+    }
+
+    //Check if the given region has exactly enough space
+    if (regions-> size == size) {
+        regions-> owner = requester;
+    }
+
+    //Split the region if there is more than enough space
+    else {
+        //Make a region for the hole
+        int splitSize = regions -> size - size;
+        struct mem_region* splitRegion = mem_region_init(splitSize);
+
+        //Make sure the allocation worked
+        if (splitRegion == NULL) {
+            return;
+        }
+
+        //Update the first region
+        regions -> size = size;
+        regions -> owner = requester;
+
+        //Insert the new region
+        splitRegion -> next = regions -> next;
+        regions -> next = splitRegion;
+    }
+}
+
+/**
+ * This function looks through the linked list and merges holes
+ * 
+ * @param regions the given ll
+ * @param currentTraversal the current region
+ * @param nextToFree marks the next portion that needs to be freed
+ */
+void mem_region_merge_empty(struct mem_region* regions) {
+    //Base case to make sure the given input is valid
+    if (regions == NULL) {
+        return;
+    }
+
+    //Create a pointer to traverse the ll
+    struct mem_region* currentTraversal = regions;
+
+    //Traverse the ll
+    while (currentTraversal != NULL && currentTraversal -> next != NULL) {
+
+        //Check if both current and next region are holes
+        if (currentTraversal -> owner == OWNER_NOBODY && currentTraversal -> next -> owner == OWNER_NOBODY) {
+            
+            //Merge current region with next and free
+            currentTraversal -> size += currentTraversal -> next -> size;
+            struct mem_region* nextToFree = currentTraversal -> next;
+            currentTraversal -> next = currentTraversal -> next -> next;
+            free(nextToFree);
+        }
+        
+        //Move regions if nothing was done
+        else {
+            currentTraversal = currentTraversal -> next;
+        }
+    }
+}
+
+/**
+ * This function finds a hole to assign a region in the linked list
+ * 
+ * @param regions the given ll
+ * @param requester the given id
+ * @param size the size of the region
+ * @param currentTraversal the current region
+ */
+void mem_region_alloc(struct mem_region* regions, int requester, int size) {
+    //Base case to check for valid parameters
+    if (requester < 0 || size <= 0 || regions == NULL) {
+        return;
+    }
+
+    //Create a pointer to traverse the ll
+    struct mem_region* currentTraversal = regions;
+    
+    //Using both the while loop and if statement, traverse the ll to find the first hole that fits
+    while (currentTraversal != NULL) {
+        if (currentTraversal -> owner == OWNER_NOBODY && currentTraversal -> size >= size) {
+            //If a hole is found, assign it
+            mem_region_assign(currentTraversal, requester, size);
+            return;
+        }
+
+        currentTraversal = currentTraversal -> next;
+    }
+}
+
+/**
+ * This function marks a given unowned region and merges the created holes
+ * 
+ * @param regions the given ll
+ * @param requester the given id
+ * @param currentTraversal the current region
+ */
+void mem_region_free(struct mem_region* regions, int requester) {
+    //Base case to check for valid inputs
+    if (regions == NULL || requester < 0) {
+        return;
+    }
+
+    //Create a pointer to traverse the ll
+    struct mem_region* currentTraversal = regions;
+    
+    //Traverse the region to find the requester
+    while (currentTraversal != NULL) {
+
+        if (currentTraversal -> owner == requester) {
+            //Mark as unowned and merge
+            currentTraversal -> owner = OWNER_NOBODY;
+            mem_region_merge_empty(regions);
+            return;
+        }
+
+        currentTraversal = currentTraversal -> next;
+    }
+}
