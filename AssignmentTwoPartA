@@ -1,0 +1,127 @@
+#include "parta.h"
+#include <ctype.h>   // For toupper
+#include <stdlib.h>  // For malloc/free
+
+/**
+ * This function will count the number of characters in string s (an array of
+ * characters) With this, it will return how long a buffer string would need to
+ * be, in order to hold those values
+ *
+ * @param s is a string in which we are measuring the length of
+ * @param bufferSize is an int that is used to count how large the buffer string
+ * will need to be
+ * @return the size of the buffer array
+ */
+int buffer_size_in_bytes(const char* s) {
+    //Base case stating that if the str is null or has no values, it will
+    //return 0
+    if (s == NULL || s[0] == '\0') {
+        return 0;
+    }
+
+    int bufferSize = 0;
+    //Until the terminator character is reached, buffersize will be incremented
+    //by 1 for each index of the string
+    for (int i = 0; s[i] != '\0'; i++) {
+        bufferSize++;
+    }
+    //At this point, bufferSize is not accounting for a terminator character,
+    //so bufferSize + 1 is returned
+    return bufferSize + 1;
+}
+
+/**
+ * This function will look through a given string in order to make sure it is a
+ * safe password The function does this by ensuring it has enough upper and
+ * lower case characters, and is only made of letters and numbers
+ *
+ * @param s a given string
+ * @param strLen the length of the string
+ * @param uppercase a counter of uppercase letters
+ * @param lowercase a counter of lowercase letters
+ * @return a boolean value that tells if the password is safe or not
+ */
+bool valid_password(const char* s) {
+    // NOTE: You are not allowed to use functions from the `string.h` header.
+    // NOTE: You ARE allowed to use functions from the `ctype.h` header
+    //Base case to ensure s isn't null
+    if (s == NULL) {
+        return false;
+    }
+    int strLen = 0;
+    int uppercase = 0;
+    int lowercase = 0;
+    //Look through array to do several things
+    for (int i = 0; s[i] != '\0'; i++) {
+        //Obtain the length of the password
+        strLen++;
+        //Increment uppercase by one if there is an uppercase letter
+        if (isupper(s[i])) {
+            uppercase++;
+        }
+        //Increment lowercase by one if there is a lowercase letter
+        else if (islower(s[i])) {
+            lowercase++;
+        }
+        //Make sure that if a non letter is used, it is a digit
+        else if (!isdigit(s[i])) {
+            return false;
+        }
+    }
+    //Make sure there are 2 letters of each case
+    if (uppercase < 2 || lowercase < 2) {
+        return false;
+    }
+    //See if the length fits the requirements, if not, return false
+    if (strLen < 6 || strLen > 10) {
+        return false;
+    }
+    //Return true if nothing is incorrect
+    return true;
+}
+
+/**
+ * This function takes in a string and gives a string where all the characters
+ * are uppercase
+ *
+ * @param s the string used
+ * @param slen the length of the string
+ * @param emptyArray if the first index is the terminator character
+ * @param resultArray the string filled with uppercase letters
+ * @return resultArray (new string with only uppercase letters)
+ */
+char* capitalize(const char* s) {
+    //Base case to make sure that s isn't null
+    if (s == NULL) {
+        return NULL;
+    }
+    //Checking to see if the terminator character is the only value in the string
+    if (s[0] == '\0') {
+        char* emptyArray = malloc(sizeof(char));
+        //Making the empty array carry the terminator character as its only value
+        if (emptyArray != NULL) {
+            emptyArray[0] = '\0';
+        }
+
+        return emptyArray;
+    }
+    //slen is the variable name because of the instructions, but does not
+    //follow my personal naming conventions (I would have used stringLength)
+    int slen = 0;
+    //Increment slen to become the length of the string
+    while (s[slen] != '\0') {
+        slen++;
+    }
+    //Make space for the terminator character
+    slen++;
+    //Allocate memory for the result array
+    char* resultArray = malloc(slen * sizeof(char));
+    //Change all characters to uppercase
+    for (int i = 0; i < slen - 1; i++) {
+        resultArray[i] = toupper(s[i]);
+    }
+    //Last index is terminator
+    resultArray[slen - 1] = '\0';
+    //Return the array with captials
+    return resultArray;
+}
