@@ -1,0 +1,122 @@
+#include "partc.h"
+#include <stdlib.h>  // For malloc/free
+
+/**
+ * This function creates a new node
+ *
+ * @param data
+ * @param createdNode the new node
+ * @return the newly made node
+ */
+struct ll_node *ll_create(int data) {
+    //Allocate the memory for a new node
+    struct ll_node *createdNode =
+        (struct ll_node *)malloc(sizeof(struct ll_node));
+    //Make the node
+    createdNode->data = data;
+    createdNode->next = NULL;
+    //Return the node
+    return createdNode;
+}
+
+/**
+ * This function destroys a node
+ *
+ * @param head the head of the linked list
+ * @return
+ */
+void ll_destroy(struct ll_node *head) {
+    //Base case to ensure the head is not null
+    if (head == NULL) {
+        // Terminate the execution of the function - this is mostly a note to
+        // self, I keep using return in void functions incorrectly
+        return;
+    }
+    //Call the function recursively, to delete
+    ll_destroy(head->next);
+    //Free the memory that is now left open
+    free(head);
+}
+
+/**
+ * This function aligns the tail node of the linked list to point to the data
+ * portion of the newly created node
+ *
+ * @param head the head of the linked list
+ * @param data the data held by each node
+ */
+void ll_append(struct ll_node *head, int data) {
+    //Connect the tail of the linked list to the data of the node that needs to be appended
+    ll_tail(head)->next = ll_create(data);
+}
+
+/**
+ * This function makes a linked list with data from the indexes of an array
+ *
+ * @param data the array that we are taking the indexes from in order to create
+ * the
+ * @param len
+ * @param createdLinkedList
+ * @return the created linked list
+ */
+struct ll_node *ll_fromarray(int *data, int len) {
+    //Base case to ensure the array is not null
+    if (data == NULL) {
+        return NULL;
+    }
+    struct ll_node *createdLinkedList = ll_create(data[0]);
+
+    for (int i = 1; i < len; i++) {
+        ll_append(createdLinkedList, data[i]);
+    }
+
+    return createdLinkedList;
+}
+
+/**
+ * This function destroys a specific node in a linked list
+ * This node will be indicated by if the given value is equivalent to the data
+ * portion of a node If the value is not found in the linked list, nothing will
+ * be removed, and the head will be returned as normal
+ *
+ *
+ * @param head the head of the linked list
+ * @param value the value that needs to be removed from the linked list
+ * @param nodeAfterHead if the head is the node needing removal, this will be
+ * made into the new head
+ * @param currentNode pointer to the head of the linked list
+ * @param removedNode the removed node when the head is not the node needing
+ * removal
+ * @return the head of the linked list
+ */
+struct ll_node *ll_remove(struct ll_node *head, int value) {
+    //Base case to ensure that the head is not null
+    if (head == NULL) {
+        return NULL;
+    }
+    //Two different cases need to be addressed, if the head node needs to be removed, or if any other node needs to be removed 
+    //Firstly, the head node's removal will need the head to be freed and the next node should be returned
+    if (head->data == value) {
+        struct ll_node *nodeAfterHead = head->next;
+        free(head);
+        return nodeAfterHead;
+    }
+    //Make a pointer (currentNode) that points to the head of the linked list
+    struct ll_node *currentNode = head;
+
+    //Find the node prior to the one that should be removed
+    while (currentNode->next != NULL && currentNode->next->data != value) {
+        currentNode = currentNode->next;
+    }
+
+    //Removing the value if it occurs on the next node
+    if (currentNode->next != NULL) {
+        //Make the nodes between the removed node point to each other
+        struct ll_node *removedNode = currentNode->next;
+        currentNode->next = removedNode->next;
+        free(removedNode);
+    }
+
+    //Only the head needs to be returned
+    return head;
+}
