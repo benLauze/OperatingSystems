@@ -1,0 +1,74 @@
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/wait.h>
+
+/**
+ * This function uses a pipe to connect the parent and child processes, with the parent being part a and the child being sort
+ * 
+ * @param argc argument count
+ * @param argv argument array
+ * @param pipeFileDes estabolishes communication channel
+ * @param partaArgs runs part a with output going to the pipe
+ * @param pid distinguishes between forked processes
+ * @param sortArgs runs sort with input from the pipe
+ * 
+ */
+int main(int argc, char* argv[]) {
+    //Check if the amount of arguments given is valid
+    if (argc != 2) {
+        fprintf(stderr, "USAGE:\n  partc FILEIN\n");
+        return 1;
+    }
+
+    //Create unidirectional pipe
+    int pipeFileDes[2];
+    if (pipe(pipeFileDes) == -1) {
+        perror("pipe");
+        return 1;
+    }
+
+    //Create the child process
+    pid_t pid = fork();
+    if (pid < 0) {
+        perror("fork");
+        return 1;
+    }
+
+    //Parent process
+    if (pid > 0) {
+        //Close the read portion of the pipe
+        close(pipeFileDes[0]);
+
+        //Redirect STDOUT in order to write at the end of the pipe
+        dup2(pipeFileDes[1], STDOUT_FILENO);
+
+        //Execute part a
+        char *partaArgs[] = {"./build/parta", argv[1], NULL};
+        execv("./build/parta", partaArgs);
+
+        //If the execution fails, make sure to use perror
+        perror("execv failed");
+        return 1;
+        
+    }else {
+        //Child process
+        //Close the write portion of the pipe
+        close(pipeFileDes[1]);
+
+        //Redirect STDIN in order to read at the end of the pipe, opposite of what happens in parent
+        dup2(pipeFileDes[0], STDIN_FILENO);
+
+        //Execute sort
+        char *sortArgs[] = {"sort", "-t,", "-k2", "-n", NULL};
+        execvp("sort", sortArgs);
+
+        //If the execution fails, make sure to use perror
+        perror("execvp failed");
+        return 1;
+    }
+
+    return 0;
+}
